@@ -1,0 +1,1 @@
+pyinstaller --onedir --add-data "licensr_position.pt;." --add-data "car_no.pt;."  .\test_model.py --hiddenimport=models.yolo
