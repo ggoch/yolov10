@@ -296,9 +296,15 @@ def find_next_valid_file(dir_path,output_path, prefix, start_num, step=1,break_n
     num = start_num
     file_names = []
 
+    if count == 0:
+        return None
+
     while True:
         if break_num is not None and num == break_num:
-            return None
+            if len(file_names) == 0:
+                return None
+            else:
+                return file_names
         
         if num in filter_nums:
             num += step
@@ -515,8 +521,13 @@ def process_images(folder_path,output_path="//192.168.1.10/113-智慧過磅暨ai
     result_plus_fileNames = None
     result_minus_fileNames = None
 
-    plus_count = math.ceil((count - 1) / 2)
-    minus_count = (count-1)-plus_count
+    # 原始算法，平均分配
+    # plus_count = math.ceil((count - 1) / 2)
+    # minus_count = (count-1)-plus_count
+
+    # 調整算法，負優先
+    plus_count = 0
+    minus_count = (count-1)
 
     process_frame_list = []
 
@@ -527,18 +538,20 @@ def process_images(folder_path,output_path="//192.168.1.10/113-智慧過磅暨ai
             # process_frame_list.append(int(result_fileName.split('+')[1].split('.')[0]))
             base_file_result = True
 
-    if max_plus is not None:
-        result_plus_fileNames = find_next_valid_file(folder_path,output_path, 'SwipeCard+', max_plus - 7, step=-1, break_num=min_minus,license_max_count=license_max_count,filter_nums=process_frame_list,count=plus_count,model1=model1,model2=model2)
-        if result_plus_fileNames is not None and len(result_plus_fileNames) > 0:
-            process_frame_list += get_image_frame_list(result_plus_fileNames)
-            result_plus_result = True
-
     if min_minus is not None:
         result_minus_fileNames = find_next_valid_file(folder_path,output_path, 'SwipeCard', min_minus,step=1,break_num=max_plus,license_max_count=license_max_count,filter_nums=process_frame_list,count=minus_count,model1=model1,model2=model2)
         if result_minus_fileNames is not None and len(result_minus_fileNames) > 0:
             # process_frame_list += [int(file.split('+')[1].split('.')[0]) for file in result_minus_fileNames]
             process_frame_list += get_image_frame_list(result_minus_fileNames)
             result_minus_result = True
+
+    plus_count = max(plus_count, count - len(process_frame_list))
+
+    if max_plus is not None:
+        result_plus_fileNames = find_next_valid_file(folder_path,output_path, 'SwipeCard+', max_plus - 7, step=-1, break_num=min_minus,license_max_count=license_max_count,filter_nums=process_frame_list,count=plus_count,model1=model1,model2=model2)
+        if result_plus_fileNames is not None and len(result_plus_fileNames) > 0:
+            process_frame_list += get_image_frame_list(result_plus_fileNames)
+            result_plus_result = True
 
     # result_plus_result = detect_img(result_plus_path,output_path)
 
