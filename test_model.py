@@ -595,55 +595,63 @@ def browse_folder():
 
 def on_submit(treeview,model1,model2):
     def inner():
-        path = entry_path.get().strip()
-        path = path.replace('\\', '/')
+        print(entry_path.get("1.0",tk.END));
+        input = entry_path.get("1.0",tk.END).strip()
+        input = input.replace('\\', '/')
+        input = input.split("\n")
+        print('修改後')
+        print(input)
 
-        _output_path = output_path.get().strip()
-        _output_path = _output_path.replace('\\', '/')
+        for path in input: 
+            # path = entry_path.get().strip()
+            # path = path.replace('\\', '/')
 
-        _find_count = find_count.get().strip()
-        _find_count = int(_find_count) if _find_count.isdigit() else 3
+            _output_path = output_path.get().strip()
+            _output_path = _output_path.replace('\\', '/')
 
-        _license_max_count = license_max_count.get().strip()
-        _license_max_count = int(_license_max_count) if _license_max_count.isdigit() else 1
+            _find_count = find_count.get().strip()
+            _find_count = int(_find_count) if _find_count.isdigit() else 3
 
-        # 清除现有数据
-        for item in treeview.get_children():
-            treeview.delete(item)
+            _license_max_count = license_max_count.get().strip()
+            _license_max_count = int(_license_max_count) if _license_max_count.isdigit() else 1
 
-        if os.path.isdir(path) and os.path.exists(path):
-            result = process_images(path,_output_path,_find_count,_license_max_count,model1,model2)
+            # 清除现有数据
+            for item in treeview.get_children():
+                treeview.delete(item)
 
-            table_data = []
+            if os.path.isdir(path) and os.path.exists(path):
+                result = process_images(path,_output_path,_find_count,_license_max_count,model1,model2)
 
-            messageText = ""
+                table_data = []
 
-            if result['base_file']["is_success"]:
-                messageText += f"刷卡帧保存成功 : {result['base_file']['file_name']}\n"
-                table_data.append(("刷卡帧",result['base_file']['file_name']))
+                messageText = ""
+
+                if result['base_file']["is_success"]:
+                    messageText += f"刷卡帧保存成功 : {result['base_file']['file_name']}\n"
+                    table_data.append(("刷卡帧",result['base_file']['file_name']))
+                else:
+                    messageText += "刷卡帧找不到車牌\n"
+                    table_data.append(("刷卡帧","沒有找到車牌"))
+
+                if result['result_plus']["is_success"]:
+                    for file in result['result_plus']['file_names']:
+                        messageText += f"影片結束前7帧保存成功 : {file}\n"
+                        table_data.append(("影片結束前7帧",file))
+                else:
+                    messageText += "影片結束前7帧找不到車牌\n"
+
+                if result['result_minus']["is_success"]:
+                    for file in result['result_minus']['file_names']:
+                        messageText += f"進磅帧保存成功 : {file}\n"
+                        table_data.append(("進磅帧",file))
+                else:
+                    messageText += "進磅帧找不到車牌\n"
+
+                reader_message_table(table_data,treeview)
+
+                # messagebox.showinfo("偵測結束", messageText)
             else:
-                messageText += "刷卡帧找不到車牌\n"
-                table_data.append(("刷卡帧","沒有找到車牌"))
-
-            if result['result_plus']["is_success"]:
-                for file in result['result_plus']['file_names']:
-                    messageText += f"影片結束前7帧保存成功 : {file}\n"
-                    table_data.append(("影片結束前7帧",file))
-            else:
-                messageText += "影片結束前7帧找不到車牌\n"
-
-            if result['result_minus']["is_success"]:
-                for file in result['result_minus']['file_names']:
-                    messageText += f"進磅帧保存成功 : {file}\n"
-                    table_data.append(("進磅帧",file))
-            else:
-                messageText += "進磅帧找不到車牌\n"
-
-            reader_message_table(table_data,treeview)
-
-            messagebox.showinfo("偵測結束", messageText)
-        else:
-            messagebox.showerror("錯誤", "路徑不存在。請選擇有效路徑")
+                messagebox.showerror("錯誤", "路徑不存在。請選擇有效路徑")
     
     return inner
 
@@ -720,7 +728,9 @@ if __name__ == "__main__":
     label_path = tk.Label(root, text="選擇資料夾路徑:")
     label_path.pack(pady=10)
 
-    entry_path = tk.Entry(root, width=80)
+    #entry_path = tk.Entry(root, width=80)
+    #entry_path.pack(padx=20, pady=5)
+    entry_path = tk.Text(root, height=10, width=50)
     entry_path.pack(padx=20, pady=5)
     # entry_path.insert(0, "./CarNo/001-T8/19C9C3F8-8E58-08B3-6836-3A0AC84EB00B")  # 设置初始值
 
@@ -729,13 +739,19 @@ if __name__ == "__main__":
     output_path.insert(0, "//192.168.1.10/113-智慧過磅暨ai影像追蹤系統研發計畫-V1/0626/Label")  # 设置初始值
     # output_path.insert(0, "./result")  # 设置初始值
 
+    lb1 = tk.Label(root, text="搜尋筆數")
+    lb1.pack(padx=20, pady=5)
+
     find_count = tk.Entry(root, width=80)
     find_count.pack(padx=20, pady=5)
     find_count.insert(0, "3")  # 设置初始值
 
+    lb2 = tk.Label(root, text="最大車牌數量")
+    lb2.pack(padx=20, pady=5)
+
     license_max_count = tk.Entry(root, width=80)
     license_max_count.pack(padx=20, pady=5)
-    license_max_count.insert(0, "3")  # 设置初始值
+    license_max_count.insert(0, "1")  # 设置初始值
 
     # btn_browse = tk.Button(root, text="瀏覽", command=browse_folder)
     # btn_browse.pack(pady=5)
